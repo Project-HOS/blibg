@@ -104,6 +104,8 @@ int main( int agc, char *agv[])
       switch ( buf[2] ) {
       case 0xc0:
 	i = 0x1e; break;
+      case 0xb0:
+	i = 0x1e; break;
       case 0xa0:
 	i = 0x22; break;
       case 0x20:
@@ -166,6 +168,7 @@ int main( int agc, char *agv[])
 
       /* EXPORT symbol block */
     case 0x94:
+    case 0x14:
       for ( i=2,s=0; i<buf[1]-1; ) {
 	switch ( buf[i]) {
 	case 0x00:

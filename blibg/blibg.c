@@ -208,6 +208,8 @@ int make_objtbl( int num, char *fname)
       switch ( rbuf[0]) {
       case 0xc0:
 	i = 0x1c; break;
+      case 0xb0:
+	i = 0x1c; break;
       case 0xa0:
 	i = 0x20; break;
       case 0x20:
@@ -243,6 +245,7 @@ int make_objtbl( int num, char *fname)
 
       break;
 
+    case 0x14: /* EXPORT symbol block */
     case 0x94: /* EXPORT symbol block */
       for ( i=0; i<size-1; ) {
 	/* i found 3 types */
@@ -624,7 +627,9 @@ int main( int agc, char *agv[])
   }
 
   for ( i=0; i<agc-2; i++) {
+#ifdef DEBUG
     fprintf( stdout, "\tarchive -> %s\n", agv[i+2]);
+#endif
     switch ( make_objtbl( i, agv[i+2])) {
     case OBJ_OPEN_ERR:
       fprintf( stderr, "\ncan't open %s.\n", agv[i+2]);
