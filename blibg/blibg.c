@@ -12,8 +12,8 @@
 
 //#define DEBUG
 
-#define MAXEXPORT 200	/* max export symbol number per 1 obect file	*/
-#define MAXOBJS   256	/* max object file number			*/
+#define MAXEXPORT 2000	/* max export symbol number */
+#define MAXOBJS   256	/* max object file number   */
 
 /* fake time stamp string */
 const char *pseudo_stamp = "020916113234";
@@ -25,12 +25,12 @@ const char *tool_name = "BLIBG-01";
 
 /* struct for Object data */
 typedef struct objcell {
-  char *fname;			/* filename */
-  char *pname;			/* program name (normally = filename - ext) */
-  int  exp_num;			/* number of export symbols */
-  char *exp_str[MAXEXPORT];	/* pointer of export symbols */
-  int  fsize;			/* file size (before padding) */
-  int  offset;			/* location offset in library file */ 
+  char *fname;			/* filename                         */
+  char *pname;			/* program name (filename - suffix) */
+  int  exp_tblidx;		/* EXPORT symbol table index        */
+  int  exp_num;			/* number of export symbols         */
+  int  fsize;			/* file size (before padding)       */
+  int  offset;			/* location offset in library file  */ 
 } OBJCELL;
 
 OBJCELL  Obj_table[MAXOBJS];
@@ -45,11 +45,11 @@ typedef struct expcell {
   int  prog_num;		/* # of program that this symbol belongs to */
 } EXPCELL;
 
-EXPCELL Exp_table[MAXOBJS*MAXEXPORT];
+EXPCELL Exp_table[MAXEXPORT];
 int     E_ed = 0;
 
 /* list of export symbols (for sorting) */
-int     Exp_list[MAXOBJS*MAXEXPORT];
+int     Exp_list[MAXEXPORT];
 
 /* strings(filename,program name,symbol) buffer size */
 #define SBUFFSIZE 32*1024
@@ -63,7 +63,7 @@ int  S_ed = 0;
 
 void print_Objtable( void)
 {
-  int i,k;
+  int i,k,l;
 
   putchar('\n');
   for ( i=0; i<O_ed; i++) {
@@ -72,8 +72,8 @@ void print_Objtable( void)
 	    i, Obj_table[i].fname, Obj_table[i].pname,
 	    Obj_table[i].exp_num, Obj_table[i].fsize );
     printf( "\tEXPORT ->\n");
-    for ( k=0; k<Obj_table[i].exp_num; k++)
-      printf( "\t\t%s\n", Obj_table[i].exp_str[k]);
+    for ( k=0,l=Obj_table[i].exp_tblidx; k<Obj_table[i].exp_num; k++)
+      printf( "\t\t%s\n", Exp_table[l+k].exp_str);
 
     putchar( '\n');
   }
@@ -91,6 +91,7 @@ void print_Objtable( void)
 #define OBJ_UNS_TYPE   3
 #define OBJ_STR_OVR    4
 #define OBJ_EXP_OVR    5
+#define OBJ_NON_EXP    6
 
 /* sort PROGRAM. key = program name, dictionary order */
 void prog_sort( void) /* (T_T) poor */
@@ -123,24 +124,12 @@ void prog_sort( void) /* (T_T) poor */
 /* sort EXPORT. key = symbol string, dictionary order */
 void export_sort( void) /* (T_T) poor */
 {
-  int i,j,k,l;
+  int i,j,k;
 
-  /* init table */
-  for ( i=j=0; i<O_ed; i++) {
-    /* init list */
-    for ( l=0; l<O_ed; l++)
-	if ( Prog_list[l] == i) break;
+  /* init list */
+  for ( i=0; i<E_ed; i++) Exp_list[i] = i;
 
-    /* init Exp_table. set symbol string and program # from object data */
-    for ( k=0; k<Obj_table[i].exp_num; j++,k++) {
-      Exp_table[j].exp_str  = Obj_table[i].exp_str[k];
-      Exp_table[j].prog_num = l;
-      Exp_list[j] = j;
-    }
-  }
-
-  E_ed = j;
-
+  /* sort */
   for ( i=0; i<E_ed-1; i++) {
     for ( j=i+1; j<E_ed; j++) {
       if ( strcmp( Exp_table[Exp_list[i]].exp_str,
@@ -177,8 +166,8 @@ int make_objtbl( int num, char *fname)
     return OBJ_OPEN_ERR;
 
   Obj_table[num].fname = fname;
-
   Obj_table[num].exp_num = 0;
+  Obj_table[num].exp_tblidx = E_ed;
   ofsize = 0;
 
   /* 1st BYTE = type, 2nd BYTE = BLOCK size */ 
@@ -249,7 +238,7 @@ int make_objtbl( int num, char *fname)
 
     case 0x14: /* EXPORT symbol block */
     case 0x94: /* EXPORT symbol block */
-      for ( i=0; i<size-1; ) {
+      for ( i=0; i<size-1; i += rbuf[i] + 1) {
 	/* i found 3 types */
 	switch ( rbuf[i+2]) {
 	case 0x00:
@@ -272,25 +261,25 @@ int make_objtbl( int num, char *fname)
 	  return OBJ_STR_OVR;
 	}
 
-	/* check export symbol number per 1 object file */
-	if ( Obj_table[num].exp_num == MAXEXPORT - 1 ) {
+	/* check export symbol number */
+	if ( E_ed == MAXEXPORT-1 ) {
 	  fclose( fp);
 	  return OBJ_EXP_OVR;
 	}
 
 	/* store export symbol string */
-	Obj_table[num].exp_str[Obj_table[num].exp_num++] =
-	  strncpy( &Sbuf[S_ed], &rbuf[i+1], rbuf[i]);
+	Exp_table[E_ed].exp_str = strncpy( &Sbuf[S_ed], &rbuf[i+1], rbuf[i]);
 	S_ed += rbuf[i] + 1;
-
-	i += rbuf[i] + 1;
+	Exp_table[E_ed].prog_num = num; 
+	Obj_table[num].exp_num++;
+	E_ed++;
       }
     }
   }
   fclose( fp);
   Obj_table[num].fsize = ofsize;
 
-  return Obj_table[num].exp_num  ? OBJ_OK: OBJ_UNS_TYPE;
+  return Obj_table[num].exp_num  ? OBJ_OK: OBJ_NON_EXP;
 } 
 
 /* joint object files with zero padding */
@@ -594,6 +583,7 @@ int main( int agc, char *agv[])
 
   fputs( "Bogus LIBrary Generator Ver. 0.2a\n"
 	 "\tfor\tH8/300H C COMPILER(Evaluation software) Ver.1.0\n"
+	 "\t\tH8S,H8/300 SERIES C Compiler Ver. 2.0D Evaluation software\n"
 	 "\t\tSH SERIES C/C++ Compiler Ver. 5.0 Evaluation software\n\n"
 	 "WARNING!! There is NO WARRANTIES on this software.\n"
 	 "Please use at YOUR OWN RISK.\n\n", stderr);
@@ -652,7 +642,11 @@ int main( int agc, char *agv[])
       return 1;
 
     case OBJ_EXP_OVR:
-      fprintf( stderr, "\ntoo much exports in %s.\n", agv[i+2]);
+      fprintf( stderr, "\nexport symbol counter overflow in %s.\n", agv[i+2]);
+      return 1;
+
+    case OBJ_NON_EXP:
+      fprintf( stderr, "\nno export symbols in %s.\n", agv[i+2]);
       return 1;
     }
   }
