@@ -1,9 +1,10 @@
 /* ------------------------------------------------------------------------ */
-/*  OBJect CHecKer   version 0.1a (2002/09/20)                              */
-/*           for     H8/300H C COMPILER(Evaluation software)                */
-/*                   SH SERIES C/C++ Compiler Ver. 5.0 Evaluation software  */
+/*  OBJect CHecKer                                                          */
+/*           for H8/300H C COMPILER(Evaluation software) Ver. 1.0           */
+/*               H8S,H8/300 SERIES C Compiler Ver. 2.0D Evaluation software */
+/*               SH SERIES C/C++ Compiler Ver. 5.0 Evaluation software      */
 /*                                                                          */
-/*                                     Copyright (C) 2002 by Project HOS    */
+/*                                 Copyright (C) 2002,2003 by Project HOS   */
 /* ------------------------------------------------------------------------ */
 #include <stdio.h>
 #include <ctype.h>
@@ -99,8 +100,6 @@ int main( int agc, char *agv[])
 	fputs("\t\tHmm... timestamp includes unprintable char.\n"
 	      "\t\tUnknown type.\n", stdout);
 
-
-      fputs(           "\tPROGRAM name     = ", stdout);
       switch ( buf[2] ) {
       case 0xc0:
 	i = 0x1e; break;
@@ -110,9 +109,16 @@ int main( int agc, char *agv[])
 	i = 0x22; break;
       case 0x20:
 	i = 0x26; break;
+      case 0x00:
+	i = 0x22; break;
       default:
 	i = -1;
       }
+
+      fprintf(stdout,"\tENTRY?           = 0x%08X\n", 
+		(buf[i-6]<<24)|(buf[i-5]<<16)|(buf[i-4]<<8)|buf[i-3]);
+
+      fputs(           "\tPROGRAM name     = ", stdout);
 
       if ( i>0 ) {
 	for ( j=buf[i++],k=0; k<j; k++) fputc( buf[i++], stdout);
@@ -166,11 +172,20 @@ int main( int agc, char *agv[])
 
 	break;
 
-      /* EXPORT symbol block */
+	/* EXPORT symbol block */
+	/* 
+	   [14] 00 00 00 00 00 00 00  N C1 C2 ... 
+	   [14] 00 01 20 00 00 00 00  N C1 C2 ...
+	   [14] 00 02 20 00 00 00 00  N C1 C2 ...
+	   [94] 00 00 20 00 00 00 00  N C1 C2 ...
+	   [94] 00 00 20 00 00 00 90  N C1 C2 ...
+	   [94] 00 00 40 04 00 00 00 00  N C1 C1 ...
+	   [94] 00 00 40 04 00 00 00 00  N C1 C2 ...
+	   */
     case 0x94:
     case 0x14:
       for ( i=2,s=0; i<buf[1]-1; ) {
-	switch ( buf[i]) {
+	switch ( buf[i+2]) {
 	case 0x00:
 	case 0x20:
 	  i += 7;
@@ -202,5 +217,5 @@ int main( int agc, char *agv[])
 }
 
 /* ------------------------------------------------------------------------ */
-/*  Copyright (C) 2002 by Project HOS                                       */
+/*  Copyright (C) 2002,2003 by Project HOS                                  */
 /* ------------------------------------------------------------------------ */
