@@ -101,21 +101,35 @@ int main( int agc, char *agv[])
 
 
       fputs(           "\tPROGRAM name     = ", stdout);
-      if ( buf[2] == 0xc0 ) i = 0x1e; else i = 0x26;
-      for ( j=buf[i++],k=0; k<j; k++) fputc( buf[i++], stdout);
-      fputc( '\n', stdout);
-      /* PROGRAM name check */
-      if (!strchk( &buf[i+1], buf[i]))
-	fputs("\t\tHmm... PROGRAM name includes unprintable char.\n"
-	      "\t\tUnknown type.\n", stdout);
+      switch ( buf[2] ) {
+      case 0xc0:
+	i = 0x1e; break;
+      case 0xa0:
+	i = 0x22; break;
+      case 0x20:
+	i = 0x26; break;
+      default:
+	i = -1;
+      }
 
-      fputs(           "\tENV? | ARC?      = ", stdout);
-      for ( j=buf[i],k=0; k<j; k++) fputc( buf[i+k+1], stdout);
-      fputc( '\n', stdout);
-      /* ( ENV? | ARC?) string check */
-      if (!strchk( &buf[i+1], buf[i]))
-	fputs("\t\tHmm... ENV? | ARC? string includes unprintable char.\n"
-	      "\t\tUnknown type.\n", stdout);
+      if ( i>0 ) {
+	for ( j=buf[i++],k=0; k<j; k++) fputc( buf[i++], stdout);
+	fputc( '\n', stdout);
+	/* PROGRAM name check */
+	if (!strchk( &buf[i+1], buf[i]))
+	  fputs("\t\tHmm... PROGRAM name includes unprintable char.\n"
+		"\t\tUnknown type.\n", stdout);
+
+	fputs(           "\tENV? | ARC?      = ", stdout);
+	for ( j=buf[i],k=0; k<j; k++) fputc( buf[i+k+1], stdout);
+	fputc( '\n', stdout);
+	/* ( ENV? | ARC?) string check */
+	if (!strchk( &buf[i+1], buf[i]))
+	  fputs("\t\tHmm... ENV? | ARC? string includes unprintable char.\n"
+		"\t\tUnknown type.\n", stdout);
+      } else {
+	fputs("\t\tHmm... Unknown type.\n", stdout);
+      }
       break;
 
       /* source filename,toolname block */

@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------ */
-/*  Bogus LIBrary Generator    version 0.2a (2002/09/20)                    */
-/*           for     H8/300H C COMPILER(Evaluation software)                */
+/*  Bogus LIBrary Generator                                                 */
+/*           for     H8/300H C COMPILER(Evaluation software) Ver. 1.0       */
 /*                   SH SERIES C/C++ Compiler Ver. 5.0 Evaluation software  */
 /*                                                                          */
 /*                                     Copyright (C) 2002 by Project HOS    */
@@ -205,7 +205,19 @@ int make_objtbl( int num, char *fname)
     case 0x83: /* timestamp/PROGRAM/environment block */
     case 0x84: /* timestamp/PROGRAM/environment block */
       /* offset to program name. rule is unknown. */
-      i =  ( rbuf[0] == 0xc0 ) ? 0x1c: 0x24;
+      switch ( rbuf[0]) {
+      case 0xc0:
+	i = 0x1c; break;
+      case 0xa0:
+	i = 0x20; break;
+      case 0x20:
+	i = 0x24; break;
+      default:
+	/* program name (suposed) is't printable char. 
+	   it means this is unknown(unseen) object type */  
+	fclose( fp);
+	return OBJ_UNS_TYPE;
+      }
 
       /* check program name */
       for ( j=0; j<rbuf[i]; j++)
