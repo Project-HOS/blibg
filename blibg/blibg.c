@@ -589,7 +589,7 @@ int main( int agc, char *agv[])
   char *infiles[MAXOBJS+2];
   FILE *fpl,*fpp,*fpe,*fpo;
 
-  fputs( "Bogus LIBrary Generator Ver. 0.2a\n"
+  fputs( "Bogus LIBrary Generator\n"
 	 "\tfor\tH8/300H C COMPILER(Evaluation software) Ver.1.0\n"
 	 "\t\tH8S,H8/300 SERIES C Compiler Ver. 2.0D Evaluation software\n"
 	 "\t\tSH SERIES C/C++ Compiler Ver. 5.0 Evaluation software\n\n"

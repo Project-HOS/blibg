@@ -32,14 +32,15 @@ int main( int agc, char *agv[])
   FILE		*fp;
   struct stat	sb;
 
-  fputs( "OBJect CHecKer Ver. 0.1a\n", stdout);
+  fputs( "OBJect CHecKer\n", stdout);
   fputs( "\tfor\tH8/300H C COMPILER(Evaluation software) Ver.1.0\n"
+	 "\t\tH8S,H8/300 SERIES C Compiler Ver. 2.0D Evaluation software\n"
 	 "\t\tSH SERIES C/C++ Compiler Ver. 5.0 Evaluation software\n\n"
 	 "WARNING!! There is NO WARRANTIES on this software.\n"
 	 "Please use at YOUR OWN RISK.\n\n", stderr);
 
   if ( agc != 2 ) {
-    fputs( "usage:\nobjchk filename\n", stderr);
+    fputs( "usage:\n\tobjchk filename\n", stderr);
     return 1;
   }
 
