@@ -1,9 +1,10 @@
 /* ------------------------------------------------------------------------ */
 /*  Bogus LIBrary Generator                                                 */
-/*           for     H8/300H C COMPILER(Evaluation software) Ver. 1.0       */
-/*                   SH SERIES C/C++ Compiler Ver. 5.0 Evaluation software  */
+/*           for H8/300H C COMPILER(Evaluation software) Ver. 1.0           */
+/*               H8S,H8/300 SERIES C Compiler Ver. 2.0D Evaluation software */
+/*               SH SERIES C/C++ Compiler Ver. 5.0 Evaluation software      */
 /*                                                                          */
-/*                                     Copyright (C) 2002 by Project HOS    */
+/*                                Copyright (C) 2002,2003 by Project HOS    */
 /* ------------------------------------------------------------------------ */
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +12,7 @@
 
 //#define DEBUG
 
-#define MAXEXPORT 64	/* max export symbol number per 1 obect file	*/
+#define MAXEXPORT 200	/* max export symbol number per 1 obect file	*/
 #define MAXOBJS   256	/* max object file number			*/
 
 /* fake time stamp string */
@@ -89,6 +90,7 @@ void print_Objtable( void)
 #define OBJ_FSTAT_ERR  2
 #define OBJ_UNS_TYPE   3
 #define OBJ_STR_OVR    4
+#define OBJ_EXP_OVR    5
 
 /* sort PROGRAM. key = program name, dictionary order */
 void prog_sort( void) /* (T_T) poor */
@@ -268,6 +270,12 @@ int make_objtbl( int num, char *fname)
 	if ( S_ed + rbuf[i] + 1 >= SBUFFSIZE ) {
 	  fclose( fp);
 	  return OBJ_STR_OVR;
+	}
+
+	/* check export symbol number per 1 object file */
+	if ( Obj_table[num].exp_num == MAXEXPORT - 1 ) {
+	  fclose( fp);
+	  return OBJ_EXP_OVR;
 	}
 
 	/* store export symbol string */
@@ -640,7 +648,11 @@ int main( int agc, char *agv[])
       return 1;
 
     case OBJ_STR_OVR:
-      fprintf( stderr, "\ntoo strings buffer overflow in %s.\n", agv[i+2]);
+      fprintf( stderr, "\nstrings buffer overflow in %s.\n", agv[i+2]);
+      return 1;
+
+    case OBJ_EXP_OVR:
+      fprintf( stderr, "\ntoo much exports in %s.\n", agv[i+2]);
       return 1;
     }
   }
@@ -694,5 +706,5 @@ int main( int agc, char *agv[])
 }
 
 /* ------------------------------------------------------------------------- */
-/*  Copyright (C) 2002 by Project HOS                                        */
+/*  Copyright (C) 2002,2003 by Project HOS                                   */
 /* ------------------------------------------------------------------------- */
