@@ -124,10 +124,19 @@ void prog_sort( void) /* (T_T) poor */
 /* sort EXPORT. key = symbol string, dictionary order */
 void export_sort( void) /* (T_T) poor */
 {
-  int i,j,k;
+  int i,j,k,l;
 
   /* init list */
   for ( i=0; i<E_ed; i++) Exp_list[i] = i;
+
+  /* set program # */
+  for ( i=0; i<O_ed; i++) {
+    j = Obj_table[Prog_list[i]].exp_tblidx;
+    k = Obj_table[Prog_list[i]].exp_num;
+    for ( l=0; l<k; l++ ) {
+      Exp_table[j+l].prog_num = i;
+    }
+  }
 
   /* sort */
   for ( i=0; i<E_ed-1; i++) {
@@ -270,7 +279,6 @@ int make_objtbl( int num, char *fname)
 	/* store export symbol string */
 	Exp_table[E_ed].exp_str = strncpy( &Sbuf[S_ed], &rbuf[i+1], rbuf[i]);
 	S_ed += rbuf[i] + 1;
-	Exp_table[E_ed].prog_num = num; 
 	Obj_table[num].exp_num++;
 	E_ed++;
       }
@@ -686,7 +694,9 @@ int main( int agc, char *agv[])
   /* HEAD BLOCK requires PROGRAM TABLE size,too */
   write_head( j, fpl);
 
+#ifdef DEBUG
   fprintf( stdout, "\n\toutput library -> %s\n", agv[1]);
+#endif
   cat_file( fpl, fpp);
   cat_file( fpl, fpe);
   cat_file( fpl, fpo);
