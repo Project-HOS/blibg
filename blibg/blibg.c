@@ -311,6 +311,9 @@ int joint_objfile( FILE *fpw)
       /* zero padding */
       for ( j=0; j<BLOCKSIZE-sz; j++) jbuf[j] = 0;
       fwrite( jbuf, 1, 256-sz, fpw);
+    } else {
+      /* decrement for last empty read */
+      offset--;
     }
 
     fclose( fpr);
